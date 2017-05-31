@@ -19,7 +19,8 @@ INV_CVT_TYPE = cv2.COLOR_LAB2BGR
 # CVT_TYPE = cv2.COLOR_BGR2YCR_CB
 # INV_CVT_TYPE = cv2.COLOR_YCR_CB2BGR
 
-
+MAX_SIDE_PX = 800
+MAX_AREA = MAX_SIDE_PX * MAX_SIDE_PX
 
 RGB_TO_YUV = np.array([[0.299, 0.587, 0.114],
                        [-0.14713, -0.28886, 0.436],
@@ -33,7 +34,7 @@ YUV_TO_RGB = np.array([[1., 0., 1.13983],
 def imread(path):
     img = cv2.imread(path, cv2.IMREAD_COLOR)
     img = img.astype(np.float32)
-    #bgr to rgb
+    # bgr to rgb
     img = img[..., ::-1]
 
     return img
@@ -47,24 +48,46 @@ def imsave(path, img):
 
 
 def generate_pattern(content):
+    # crop an image at center so new h and w are multiple of GRID_PX
+    x_px = content.shape[0]
+    y_px = content.shape[1]
+    x_px_lost = x_px % GRID_PX
+    y_px_lost = y_px % GRID_PX
+    start_x_px_idx = x_px_lost // 2
+    start_y_px_idx = y_px_lost // 2
+
+    content = content[
+              start_x_px_idx: start_x_px_idx + x_px // GRID_PX * GRID_PX,
+              start_y_px_idx: start_y_px_idx + y_px // GRID_PX * GRID_PX,
+              :
+              ]
+    imsave('./output/cropped.png', content)
+
+    #convert color scheme
     content_bgr = content[..., ::-1] / 255.
     content_cvt = cv2.cvtColor(content_bgr, CVT_TYPE)
 
     content_features = {}
 
-    shape = (1,) + content.shape
+    image_shape = content.shape
+    x_px = image_shape[0]
+    y_px = image_shape[1]
+    batch_shape = (1,) + image_shape
+    image_area = x_px * y_px
+    if image_area > MAX_AREA:
+        sf = image_area / MAX_AREA
+
 
     g = tf.Graph()
     with g.as_default(), g.device('/cpu:0'), tf.Session() as sess:
-        image = tf.placeholder('float', shape=shape)
+        image = tf.placeholder('float', shape=batch_shape)
         net, mean_pixel = vgg.net(VGG_PATH, image)
 
         content_features[CONTENT_LAYER] = net[CONTENT_LAYER].eval(
             feed_dict={image: np.array([vgg.preprocess(content, mean_pixel)])})
 
     with tf.Graph().as_default():
-        x_px = shape[1]
-        y_px = shape[2]
+
         x_g_px = x_px // GRID_PX + (0 if x_px % GRID_PX == 0 else 1)
         y_g_px = y_px // GRID_PX + (0 if y_px % GRID_PX == 0 else 1)
 
@@ -78,11 +101,11 @@ def generate_pattern(content):
                 y_e_px = min((j + 1) * GRID_PX, y_px)
 
                 xs_cvt = content_cvt[x_s_px: x_e_px, y_s_px: y_e_px, :]
-                xs_init_cvt_color = np.mean(xs_cvt, axis=(0,1))
+                xs_init_cvt_color = np.mean(xs_cvt, axis=(0, 1))
                 xs_init_bgr_color = cv2.cvtColor(xs_init_cvt_color[np.newaxis, np.newaxis, :], INV_CVT_TYPE)
                 xs_init_rgb_color = xs_init_bgr_color[..., ::-1] * 255.
                 xs_init = vgg.preprocess(xs_init_rgb_color, mean_pixel)
-                init_colors[i, j] = xs_init[0,0]
+                init_colors[i, j] = xs_init[0, 0]
 
         indices = np.zeros((x_px, y_px), dtype=np.int32)
         colors = []
@@ -110,9 +133,9 @@ def generate_pattern(content):
 
         colors_init = np.stack(colors)
         colors_v = tf.Variable(colors_init)
-        flat_indices = tf.constant(indices.reshape((-1,1)))
+        flat_indices = tf.constant(indices.reshape((-1, 1)))
         flat_image = tf.gather_nd(colors_v, flat_indices)
-        image = tf.reshape(flat_image, shape=shape)
+        image = tf.reshape(flat_image, shape=batch_shape)
 
         net, _ = vgg.net(VGG_PATH, image)
 
@@ -129,8 +152,7 @@ def generate_pattern(content):
         # optimization
         with tf.Session() as sess:
             sess.run(tf.global_variables_initializer())
-            # sess.run(tf.initialize_all_variables())
-            init_img = sess.run(image).reshape(content.shape)
+            init_img = sess.run(image).reshape(image_shape)
             init_img = vgg.unprocess(init_img, mean_pixel)
             imsave('./output/init.png'.format(i), init_img)
             init_img_bgr = init_img[..., ::-1].astype(np.float32) / 255.
@@ -144,7 +166,7 @@ def generate_pattern(content):
 
                 if i % ITER_PER_CHECKPOINT == 0:
                     result = image.eval()
-                    result = result.reshape(shape[1:])
+                    result = result.reshape(image_shape)
                     result = vgg.unprocess(result, mean_pixel)
                     imsave('./output/result_{}.png'.format(i), result)
 
@@ -159,9 +181,11 @@ def generate_pattern(content):
                     result = result[..., ::-1]
                     imsave('./output/result_{}_color.png'.format(i), result)
 
+
 def main():
     content = imread('./input/input.jpg')
     generate_pattern(content)
+
 
 if __name__ == '__main__':
     main()
