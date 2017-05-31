@@ -10,6 +10,16 @@ GRID_PX = 5
 LEARNING_RATE = 1e1
 ITERATIONS = 1000
 ITER_PER_CHECKPOINT = 10
+# CVT_TYPE = cv2.COLOR_BGR2YUV
+# INV_CVT_TYPE = cv2.COLOR_YUV2BGR
+CVT_TYPE = cv2.COLOR_BGR2LAB
+INV_CVT_TYPE = cv2.COLOR_LAB2BGR
+# CVT_TYPE = cv2.COLOR_BGR2LUV
+# INV_CVT_TYPE = cv2.COLOR_LUV2BGR
+# CVT_TYPE = cv2.COLOR_BGR2YCR_CB
+# INV_CVT_TYPE = cv2.COLOR_YCR_CB2BGR
+
+
 
 RGB_TO_YUV = np.array([[0.299, 0.587, 0.114],
                        [-0.14713, -0.28886, 0.436],
@@ -37,6 +47,9 @@ def imsave(path, img):
 
 
 def generate_pattern(content):
+    content_bgr = content[..., ::-1] / 255.
+    content_cvt = cv2.cvtColor(content_bgr, CVT_TYPE)
+
     content_features = {}
 
     shape = (1,) + content.shape
@@ -46,9 +59,8 @@ def generate_pattern(content):
         image = tf.placeholder('float', shape=shape)
         net, mean_pixel = vgg.net(VGG_PATH, image)
 
-        content_pre = np.array([vgg.preprocess(content, mean_pixel)])
         content_features[CONTENT_LAYER] = net[CONTENT_LAYER].eval(
-            feed_dict={image: content_pre})
+            feed_dict={image: np.array([vgg.preprocess(content, mean_pixel)])})
 
     with tf.Graph().as_default():
         x_px = shape[1]
@@ -64,13 +76,13 @@ def generate_pattern(content):
                 x_e_px = min((i + 1) * GRID_PX, x_px)
                 y_s_px = j * GRID_PX
                 y_e_px = min((j + 1) * GRID_PX, y_px)
-                r_slice = content_pre[0, x_s_px: x_e_px, y_s_px: y_e_px, 0]
-                g_slice = content_pre[0, x_s_px: x_e_px, y_s_px: y_e_px, 1]
-                b_slice = content_pre[0, x_s_px: x_e_px, y_s_px: y_e_px, 2]
-                init_colors[i, j, 0] = np.average(r_slice)
-                init_colors[i, j, 1] = np.average(g_slice)
-                init_colors[i, j, 2] = np.average(b_slice)
 
+                xs_cvt = content_cvt[x_s_px: x_e_px, y_s_px: y_e_px, :]
+                xs_init_cvt_color = np.mean(xs_cvt, axis=(0,1))
+                xs_init_bgr_color = cv2.cvtColor(xs_init_cvt_color[np.newaxis, np.newaxis, :], INV_CVT_TYPE)
+                xs_init_rgb_color = xs_init_bgr_color[..., ::-1] * 255.
+                xs_init = vgg.preprocess(xs_init_rgb_color, mean_pixel)
+                init_colors[i, j] = xs_init[0,0]
 
         indices = np.zeros((x_px, y_px), dtype=np.int32)
         colors = []
@@ -114,14 +126,17 @@ def generate_pattern(content):
         # optimizer setup
         train_step = tf.train.AdamOptimizer(LEARNING_RATE).minimize(loss)
 
-        content_cvt = cv2.cvtColor(content[..., ::-1], cv2.COLOR_BGR2YUV)
-        _, c2, c3 = cv2.split(content_cvt)
-
         # optimization
         with tf.Session() as sess:
-            init_op = tf.global_variables_initializer()
-            sess.run(init_op)
+            sess.run(tf.global_variables_initializer())
             # sess.run(tf.initialize_all_variables())
+            init_img = sess.run(image).reshape(content.shape)
+            init_img = vgg.unprocess(init_img, mean_pixel)
+            imsave('./output/init.png'.format(i), init_img)
+            init_img_bgr = init_img[..., ::-1].astype(np.float32) / 255.
+            init_img_cvt = cv2.cvtColor(init_img_bgr, CVT_TYPE)
+            _, c2, c3 = cv2.split(init_img_cvt)
+
             for i in range(ITERATIONS):
                 loss_content = sess.run([content_loss])
                 print('iteration {} perceptual loss: {}'.format(i, loss_content))
@@ -133,11 +148,13 @@ def generate_pattern(content):
                     result = vgg.unprocess(result, mean_pixel)
                     imsave('./output/result_{}.png'.format(i), result)
 
+                    result_bgr = result[..., ::-1].astype(np.float32) / 255.
+
                     # rgb to bgr
-                    result_cvt = cv2.cvtColor(result[..., ::-1].astype(np.float32), cv2.COLOR_BGR2YUV)
+                    result_cvt = cv2.cvtColor(result_bgr, CVT_TYPE)
                     c1, _, _ = cv2.split(result_cvt)
                     merged = cv2.merge((c1, c2, c3))
-                    result = cv2.cvtColor(merged, cv2.COLOR_YUV2BGR).astype(np.float32)
+                    result = cv2.cvtColor(merged, INV_CVT_TYPE) * 255.
                     # bgr to rgb
                     result = result[..., ::-1]
                     imsave('./output/result_{}_color.png'.format(i), result)
