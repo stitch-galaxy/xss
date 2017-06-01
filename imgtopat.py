@@ -1,6 +1,7 @@
 import numpy as np
 import tensorflow as tf
 import cv2
+import math
 
 import vgg
 
@@ -69,14 +70,22 @@ def generate_pattern(content):
 
     content_features = {}
 
-    image_shape = content.shape
-    x_px = image_shape[0]
-    y_px = image_shape[1]
-    batch_shape = (1,) + image_shape
-    image_area = x_px * y_px
-    if image_area > MAX_AREA:
-        sf = image_area / MAX_AREA
+    orig_im_shape = content.shape
+    im_shape = orig_im_shape
+    x_px = orig_im_shape[0]
+    y_px = orig_im_shape[1]
+    sf = 1
+    im_area = x_px * y_px
+    if im_area > MAX_AREA:
+        sf = math.sqrt(MAX_AREA / im_area)
+    if sf < 1:
+        # content = cv2.resize(content, (0, 0), fx=sf, fy=sf, interpolation=cv2.INTER_CUBIC)
+        content = cv2.resize(content, (0,0), fx=sf, fy=sf, interpolation=cv2.INTER_LINEAR)
+        imsave('./output/resized.png', content)
+        im_shape = content.shape
 
+    orig_batch_shape = (1,) + orig_im_shape
+    batch_shape = (1,) + im_shape
 
     g = tf.Graph()
     with g.as_default(), g.device('/cpu:0'), tf.Session() as sess:
@@ -135,7 +144,11 @@ def generate_pattern(content):
         colors_v = tf.Variable(colors_init)
         flat_indices = tf.constant(indices.reshape((-1, 1)))
         flat_image = tf.gather_nd(colors_v, flat_indices)
-        image = tf.reshape(flat_image, shape=batch_shape)
+        orig_image = tf.reshape(flat_image, shape=orig_batch_shape)
+        if sf < 1:
+            # Tensorflow does not have gradient defined for bicubic interpolation
+            image = tf.image.resize_images(orig_image, np.array(im_shape)[:-1], method=tf.image.ResizeMethod.BILINEAR)
+        # image = tf.reshape(flat_image, shape=batch_shape)
 
         net, _ = vgg.net(VGG_PATH, image)
 
@@ -152,7 +165,7 @@ def generate_pattern(content):
         # optimization
         with tf.Session() as sess:
             sess.run(tf.global_variables_initializer())
-            init_img = sess.run(image).reshape(image_shape)
+            init_img = sess.run(orig_image).reshape(orig_im_shape)
             init_img = vgg.unprocess(init_img, mean_pixel)
             imsave('./output/init.png'.format(i), init_img)
             init_img_bgr = init_img[..., ::-1].astype(np.float32) / 255.
@@ -165,8 +178,8 @@ def generate_pattern(content):
                 sess.run(train_step)
 
                 if i % ITER_PER_CHECKPOINT == 0:
-                    result = image.eval()
-                    result = result.reshape(image_shape)
+                    result = sess.run(orig_image)
+                    result = result.reshape(orig_im_shape)
                     result = vgg.unprocess(result, mean_pixel)
                     imsave('./output/result_{}.png'.format(i), result)
 
