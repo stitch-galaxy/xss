@@ -29,6 +29,7 @@ nvidia-smi
 sudo apt-get install libcupti-dev
 
 #download anaconda: https://www.continuum.io/downloads
+curl -O https://repo.continuum.io/archive/Anaconda3-4.4.0-Linux-x86_64.sh
 sudo bash Anaconda3-4.4.0-Linux-x86_64.sh
 conda create -n sg python=3.5
 source activate sg
