@@ -30,12 +30,10 @@ def net(data_path, input_image):
     current = input_image
     for i, name in enumerate(layers):
         kind = name[:4]
-        print(kind)
         if kind == 'conv':
             kernels, bias = weights[i][0][0][0][0]
             # matconvnet: weights are [width, height, in_channels, out_channels]
             # tensorflow: weights are [height, width, in_channels, out_channels]
-            print('channels: {}'.format(kernels.shape[2]))
             kernels = np.transpose(kernels, (1, 0, 2, 3))
             bias = bias.reshape(-1)
             current = _conv_layer(current, kernels, bias)
@@ -45,7 +43,6 @@ def net(data_path, input_image):
             current = _pool_layer(current)
         net[name] = current
 
-    print('end')
     assert len(net) == len(layers)
     return net, mean_pixel
 
