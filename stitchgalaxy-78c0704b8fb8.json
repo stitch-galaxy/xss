@@ -1,0 +1,12 @@
+{
+  "type": "service_account",
+  "project_id": "stitchgalaxy-169408",
+  "private_key_id": "78c0704b8fb877aa4a39a20c9c0bd5d4e70d39fd",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQDHCkANdYzBbd2Z\n9VmcyEa0vk0V3d3OtakAxsxuyzHoSqIgw6eur2S+H5Yi7AKWpOlhkGTaUJrDywFP\n95UWecAPHtWep7VUNl5r3CQRBcDR+dt7D4y/RNz7ShMGc2uMSpWKaJ9GBJEpD59D\nUxPogjcXNHG2FHHdrO3KTTDxgkzJnFa6KTpZX3zimi7RyDVaWNe42w3LidQw1qgt\n5IvvUoYkzOChmSZEAlXItMuroRSBrHGAOpZKab1Mc6dyBkqPRQTdBmulHK8wbp4C\nvNi2EsSoEh29ijLt1+fwO8kewJtSaazibpWKP6wEHAHA3FhElYRPu0FUtngz03Iw\nv/j0vDuZAgMBAAECggEAAOWXoH5MZvcfEP/Ttz4I+rm1/WiInjmGUrkSmCTO2ELO\noTXDrlwe9ZZZ2SI8G40QE7726iu3AgI+D5JIUZe1DFX+VQUt1XybOoKW7QOChc+w\nGmLzDOeU1IY8a+jrbday/sxcfCnIGtz1qECz4PY5PlMGEiTccHwqsO2RHP14nOeK\nTMIH6ZjbdXGmj1ugVVZ8abzjB6p49RMI+24yrnXs+jvgMjQRFciMyH99UMBCbBBD\nARyukHaktMdu+1J3HnEOCWICc3WnaYV+2X3BAFnXfie+Pumif0uWjB8uXrzcFt9e\ngfQuMKuzUSpY6gEERDAsTH9BFLyJ9/YynwxkdgYMWwKBgQDnq9pDur5pS9KIDDxa\n2dkxxPF9Vc62Yi1e6AOkER1lxA2Llln3hPkXmynoN9Mh2Eki56eebSbqXmbverso\n/P3IWQ52X08w06AW1fpjWr8ykM3ZOzs9Tk8fc0jQWRpYAIGnD2LvPDLy47T/M4fj\naf0I7Ve/j9n+/+dHyA2SO8+xgwKBgQDb8SdIx2aC5lrDdYq77lHq8EV8Nw0FD0DG\nI3qvpB409Xa+01ztgsFRYcElTYIz66JcDlAmSqi2ecMQmmf2vWL/GvHycEb5DWQC\nX/3DBzLDa8J9VI1eaDzkIlTwsYLejnP1xDtKtt4uMI7Rs0Ytltr8UgtyhPPJ/60+\nDEWYYfbfswKBgCtPeXKICujsf+NnRjFF4NDpHKxtykNWf1zqyyN0/6XyzQV3ikI3\n3cmH/IGpThNZt/KKlE+N4GSYWW4T58F16ov1+jou/0MFjTw3rKO+Z1gwsgsWg7Cm\nXyxmBQrOXZpuHc75lWlcO7okz8WWAKWHPwLYPDtXzU1a0gYdZEweWmm5AoGAXhUA\nGu/A+AmVlbq4B7/gJsF017esyBdIO/l9R5jKmxjNHL/JJogiLa/FMTHAmnkXUI2G\n13pkRPo86ONDyZYlvL5H9M72bR6/QwzQvhZcLp/v6DC88D9inKva7cLhGlaRX/X6\n7vDehZ+b2DP5txKqxfhKkUgyCJxn/Py+4Ho3YmUCgYBtsiZ3xqkJybYi17hSIoyE\nDNpeOrCDySkQx5m3n9HsZmmcYGX8656qfLGxSFrF9bDpvrxASheP3dbT38j39iFf\n7CLq+87WGWJfR+/rvhUR1XE0PEQAyvE7FRSJncQDu3hxGJdV94bBIosEmM3+XqIN\n88Jio/SFsS2RXYBc96AFNQ==\n-----END PRIVATE KEY-----\n",
+  "client_email": "gs-774@stitchgalaxy-169408.iam.gserviceaccount.com",
+  "client_id": "115968469023634614081",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://accounts.google.com/o/oauth2/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/gs-774%40stitchgalaxy-169408.iam.gserviceaccount.com"
+}
